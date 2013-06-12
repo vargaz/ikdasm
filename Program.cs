@@ -26,30 +26,50 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using Mono.Options;
 
 namespace Ildasm
 {
     class Program
     {
-        static void Main(string[] args)
+        static int Main(string[] args)
         {
             string outputFile = null;
             string inputFile = null;
             var compatLevel = CompatLevel.None;
             var flags = Flags.None;
-            foreach (var arg in args)
-            {
-                if (arg.StartsWith("-", StringComparison.Ordinal) || arg.StartsWith("/", StringComparison.Ordinal))
-                {
-                    string value;
-                    if (TryMatchOption(arg, "out", out value))
-                    {
-                        outputFile = value;
-                    }
-                    else if (TryMatchOption(arg, "compat", out value))
-                    {
-                        switch (value)
-                        {
+
+			if (typeof (int).Assembly.GetType ("Mono.Runtime") != null) {
+				bool printUsage = false;
+
+				var p = new OptionSet () {
+						{ "help", v => printUsage = true },
+						{ "out", v => outputFile = v }
+					};
+				args = p.Parse (args).ToArray ();
+				if (printUsage) {
+					PrintUsage ();
+					return 0;
+				}
+				if (args.Length < 1) {
+					PrintUsage ();
+					return 1;
+				}
+				inputFile = args [0];
+			} else {
+				foreach (var arg in args)
+				{
+					if (arg.StartsWith("-", StringComparison.Ordinal) || arg.StartsWith("/", StringComparison.Ordinal))
+					{
+						string value;
+						if (TryMatchOption(arg, "out", out value))
+						{
+							outputFile = value;
+						}
+						else if (TryMatchOption(arg, "compat", out value))
+						{
+							switch (value)
+							{
                             case "2.0":
                                 compatLevel = CompatLevel.V20;
                                 break;
@@ -61,40 +81,42 @@ namespace Ildasm
                                 break;
                             default:
                                 PrintUsage();
-                                return;
-                        }
-                    }
-                    else if (String.Compare(arg, 1, "diffmode", 0, 8, StringComparison.OrdinalIgnoreCase) == 0)
-                    {
-                        flags |= Flags.DiffMode;
-                    }
-                    else if (IsIldasmOption(arg, "caverbal"))
-                    {
-                        flags |= Flags.Caverbal;
-                    }
-                    else
-                    {
-                        PrintUsage();
-                        return;
-                    }
-                }
-                else
-                {
-                    if (inputFile != null)
-                    {
-                        PrintUsage();
-                        return;
-                    }
-                    else
-                    {
-                        inputFile = arg;
-                    }
-                }
-            }
+                                return 1;
+							}
+						}
+						else if (String.Compare(arg, 1, "diffmode", 0, 8, StringComparison.OrdinalIgnoreCase) == 0)
+						{
+							flags |= Flags.DiffMode;
+						}
+						else if (IsIldasmOption(arg, "caverbal"))
+						{
+							flags |= Flags.Caverbal;
+						}
+						else
+						{
+							PrintUsage();
+							return 1;
+						}
+					}
+					else
+					{
+						if (inputFile != null)
+						{
+							PrintUsage();
+							return 1;
+						}
+						else
+						{
+							inputFile = arg;
+						}
+					}
+				}
+			}
+
             if (inputFile == null)
             {
                 PrintUsage();
-                return;
+                return 1;
             }
             var disassembler = new Disassembler(inputFile, outputFile, compatLevel, flags);
             if (outputFile != null)
@@ -124,6 +146,7 @@ namespace Ildasm
             {
                 disassembler.Save(Console.Out);
             }
+			return 0;
         }
 
         static bool TryMatchOption(string arg, string key, out string value)
@@ -151,10 +174,15 @@ namespace Ildasm
             Console.WriteLine("Usage: ikdasm [options] <file_name> [options]");
             Console.WriteLine();
             Console.WriteLine("Options:");
-            Console.WriteLine("  /OUT=<file name>    Direct output to file rather than to stdout.");
-            Console.WriteLine("  /COMPAT=<version>   Match ildasm behavior. (<version> = 2.0 | 4.0 | 4.5)");
-            Console.WriteLine("  /DIFFMODE           Remove superficial differences to allow assembly comparisons");
-            Console.WriteLine("  /CAVERBAL           Try to decode custom attribute blobs");
+			if (typeof (int).Assembly.GetType ("Mono.Runtime") != null) {
+				Console.WriteLine ("  --out=<file name>   Direct output to file rather than stdout.");
+				Console.WriteLine ("  --help              Print this help.");
+			} else {
+				Console.WriteLine("  /OUT=<file name>    Direct output to file rather than to stdout.");
+				Console.WriteLine("  /COMPAT=<version>   Match ildasm behavior. (<version> = 2.0 | 4.0 | 4.5)");
+				Console.WriteLine("  /DIFFMODE           Remove superficial differences to allow assembly comparisons");
+				Console.WriteLine("  /CAVERBAL           Try to decode custom attribute blobs");
+			}
         }
     }
 }

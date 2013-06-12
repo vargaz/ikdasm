@@ -63,6 +63,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Util.cs" />
     <Compile Include="VTableFixups.cs" />
+    <Compile Include="Options.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
