@@ -81,20 +81,21 @@ namespace Ildasm
                                 break;
                             default:
                                 PrintUsage();
-                                return;
-                        }
-                    }
-                    else if (String.Compare(arg, 1, "diffmode", 0, 8, StringComparison.OrdinalIgnoreCase) == 0)
-                    {
-                        flags |= Flags.DiffMode;
-                    }
-                    else if (IsIldasmOption(arg, "caverbal"))
-                    {
-                        flags |= Flags.Caverbal;
-                    }
-                    else if (IsIldasmOption(arg, "project"))
-                    {
+                                return 1;
+							}
+						}
+						else if (String.Compare(arg, 1, "diffmode", 0, 8, StringComparison.OrdinalIgnoreCase) == 0)
+						{
+							flags |= Flags.DiffMode;
+						}
+						else if (IsIldasmOption(arg, "caverbal"))
+						{
+							flags |= Flags.Caverbal;
+						}
+                        else if (IsIldasmOption(arg, "project"))
+                        {
                         flags |= Flags.Project;
+<<<<<<< HEAD
                     }
                     else
                     {
