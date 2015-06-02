@@ -94,25 +94,20 @@ namespace Ildasm
 						}
                         else if (IsIldasmOption(arg, "project"))
                         {
-                        flags |= Flags.Project;
-<<<<<<< HEAD
+                            flags |= Flags.Project;
+                        }
                     }
                     else
                     {
-                        PrintUsage();
-                        return;
-                    }
-                }
-                else
-                {
-                    if (inputFile != null)
-                    {
-                        PrintUsage();
-                        return;
-                    }
-                    else
-                    {
-                        inputFile = arg;
+                        if (inputFile != null)
+                        {
+                            PrintUsage();
+                            return 1;
+                        }
+                        else
+                        {
+                            inputFile = arg;
+                        }
                     }
                 }
             }
