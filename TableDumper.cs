@@ -31,7 +31,9 @@ using IKVM.Reflection;
 namespace Ildasm
 {
 	enum MetadataTableIndex {
+		ModuleRef = 0x1a,
 		Assembly = 0x20,
+		AssemblyRef = 0x23,
 	}
 
 	class TableDumper
@@ -62,6 +64,12 @@ namespace Ildasm
 			case MetadataTableIndex.Assembly:
 				DumpAssemblyTable (w);
 				break;
+			case MetadataTableIndex.AssemblyRef:
+				DumpAssemblyRefTable (w);
+				break;
+			case MetadataTableIndex.ModuleRef:
+				DumpModuleRefTable (w);
+				break;
 			default:
 				throw new NotImplementedException ();
 			}
@@ -71,7 +79,7 @@ namespace Ildasm
 			for (int i = 0; i < len; ++i) {
 				if ((i % 16) == 0)
 					w.Write (String.Format ("\n0x{0:x08}: ", i));
-				w.Write (String.Format ("{0:x02} ", bytes [i]));
+				w.Write (String.Format ("{0:X02} ", bytes [i]));
 			}
 		}
 
@@ -96,6 +104,38 @@ namespace Ildasm
 				}
 				w.WriteLine (String.Format ("Culture:       {0}", module.GetString (r.Culture)));
 				w.WriteLine ();
+			}
+		}
+
+		void DumpAssemblyRefTable (TextWriter w) {
+			var t = module.AssemblyRef;
+			w.WriteLine ("AssemblyRef Table");
+			int rowIndex = 1;
+			foreach (var r in t.records) {
+				w.WriteLine (String.Format ("{0}: Version={1}.{2}.{3}.{4}", rowIndex, r.MajorVersion, r.MinorVersion, r.BuildNumber, r.RevisionNumber));
+				w.WriteLine (String.Format ("\tName={0}", module.GetString (r.Name)));
+				w.WriteLine (String.Format ("\tFlags=0x{0:x08}", r.Flags));
+				var blob = module.GetBlob (r.PublicKeyOrToken);
+				if (blob.Length == 0) {
+					w.WriteLine ("\tZero sized public key");
+				} else {
+					w.Write ("\tPublic Key:");
+					byte[] bytes = blob.ReadBytes (blob.Length);
+					HexDump (w, bytes, bytes.Length);
+					w.WriteLine ();
+				}
+				w.WriteLine ();
+				rowIndex ++;
+			}
+		}
+
+		void DumpModuleRefTable (TextWriter w) {
+			var t = module.ModuleRef;
+			w.WriteLine ("ModuleRef Table (1.." + t.RowCount + ")");
+			int rowIndex = 1;
+			foreach (var r in t.records) {
+				w.WriteLine (String.Format ("{0}: {1}", rowIndex, module.GetString (r)));
+				rowIndex ++;
 			}
 		}
 	}

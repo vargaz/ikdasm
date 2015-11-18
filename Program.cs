@@ -47,6 +47,8 @@ namespace Ildasm
 						{ "help", v => printUsage = true },
 						{ "out", v => outputFile = v },
 						{ "assembly", v =>tableToDump = MetadataTableIndex.Assembly },
+						{ "assemblyref", v =>tableToDump = MetadataTableIndex.AssemblyRef },
+						{ "moduleref", v =>tableToDump = MetadataTableIndex.ModuleRef },
 					};
 				args = p.Parse (args).ToArray ();
 				if (printUsage) {
