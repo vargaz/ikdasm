@@ -36,6 +36,8 @@ namespace Ildasm
         {
             string outputFile = null;
             string inputFile = null;
+			string deltaFile = null;
+			string deltaILFile = null;
             MetadataTableIndex? tableToDump = null;
             var compatLevel = CompatLevel.None;
             var flags = Flags.None;
@@ -50,7 +52,9 @@ namespace Ildasm
 						{ "assemblyref", v =>tableToDump = MetadataTableIndex.AssemblyRef },
 						{ "moduleref", v =>tableToDump = MetadataTableIndex.ModuleRef },
 						{ "enclog", v =>tableToDump = MetadataTableIndex.EncLog },
-						{ "encmap", v =>tableToDump = MetadataTableIndex.EncMap }
+						{ "encmap", v =>tableToDump = MetadataTableIndex.EncMap },
+						{ "delta=", v => deltaFile = v },
+						{ "deltail=", v => deltaILFile = v },
 					};
 				args = p.Parse (args).ToArray ();
 				if (printUsage) {
@@ -59,6 +63,10 @@ namespace Ildasm
 				}
 				if (args.Length < 1) {
 					PrintUsage ();
+					return 1;
+				}
+				if ((deltaFile != null && deltaILFile == null)) {
+					Console.Error.WriteLine ("The --delta= argument requires the --deltail= argument.");
 					return 1;
 				}
 				inputFile = args [0];
@@ -139,7 +147,7 @@ namespace Ildasm
 				}
 				return 0;
 			}
-            var disassembler = new Disassembler(inputFile, outputFile, compatLevel, flags);
+            var disassembler = new Disassembler(inputFile, outputFile, deltaFile, deltaILFile, compatLevel, flags);
             if (outputFile != null)
             {
                 Encoding enc;

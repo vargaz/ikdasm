@@ -96,7 +96,7 @@ namespace Ildasm
         readonly bool diffMode;
         readonly Flags flags;
 
-        internal Disassembler(string inputFile, string outputFile, CompatLevel compat, Flags flags)
+        internal Disassembler(string inputFile, string outputFile, string deltaFile, string deltaILFile, CompatLevel compat, Flags flags)
         {
             this.outputFile = outputFile;
             this.compat = compat;
@@ -136,6 +136,12 @@ namespace Ildasm
             {
                 assembly = universe.LoadAssembly(raw);
                 module = assembly.ManifestModule;
+
+				if (deltaFile != null) {
+					var fs = File.OpenRead (deltaFile);
+					var ilfs = File.OpenRead (deltaILFile);
+					assembly.AddDelta (fs, ilfs);
+				}
             }
             else
             {
