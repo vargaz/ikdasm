@@ -49,6 +49,8 @@ namespace Ildasm
 						{ "assembly", v =>tableToDump = MetadataTableIndex.Assembly },
 						{ "assemblyref", v =>tableToDump = MetadataTableIndex.AssemblyRef },
 						{ "moduleref", v =>tableToDump = MetadataTableIndex.ModuleRef },
+						{ "enclog", v =>tableToDump = MetadataTableIndex.EncLog },
+						{ "encmap", v =>tableToDump = MetadataTableIndex.EncMap }
 					};
 				args = p.Parse (args).ToArray ();
 				if (printUsage) {

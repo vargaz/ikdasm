@@ -31,7 +31,38 @@ using IKVM.Reflection;
 namespace Ildasm
 {
 	enum MetadataTableIndex {
+		Module = 0x0,
+		TypeRef = 0x1,
+		TypeDef = 0x2,
+		FieldPtr = 0x3,
+		Field = 0x4,
+		MethodPtr = 0x5,
+		Method = 0x6,
+		ParamPtr = 0x7,
+		Param = 0x8,
+		InterfaceImpl = 0x9,
+		MemberRef = 0xa,
+		Constant = 0xb,
+		CustomAttr = 0xc,
+		FieldMarshal = 0xd,
+		DeclSecurity = 0xe,
+		ClassLayout = 0xf,
+		FieldLayout = 0x10,
+		StandaloneSig = 0x11,
+		EventMap = 0x12,
+		EventPtr = 0x13,
+		Event = 0x14,
+		PropertyMap = 0x15,
+		PropertyPtr = 0x16,
+		Property = 0x17,
+		MethodSem = 0x18,
+		MethodImpl = 0x19,
 		ModuleRef = 0x1a,
+		TypeSpec = 0x1b,
+		ImplMap = 0x1c,
+		FieldRVA = 0x1d,
+		EncLog = 0x1e,
+		EncMap = 0x1f,
 		Assembly = 0x20,
 		AssemblyRef = 0x23,
 	}
@@ -69,6 +100,12 @@ namespace Ildasm
 				break;
 			case MetadataTableIndex.ModuleRef:
 				DumpModuleRefTable (w);
+				break;
+			case MetadataTableIndex.EncLog:
+				DumpEncLogTable (w);
+				break;
+			case MetadataTableIndex.EncMap:
+				DumpEncMapTable (w);
 				break;
 			default:
 				throw new NotImplementedException ();
@@ -135,6 +172,31 @@ namespace Ildasm
 			int rowIndex = 1;
 			foreach (var r in t.records) {
 				w.WriteLine (String.Format ("{0}: {1}", rowIndex, module.GetString (r)));
+				rowIndex ++;
+			}
+		}
+
+		string StringifyToken (int token) {
+			int table = token >> 24;
+			return "" + (MetadataTableIndex)table + " " + (token & 0xffffff) + "";
+		}
+
+		void DumpEncLogTable (TextWriter w) {
+			var t = module.EncLog;
+			w.WriteLine ("EncLog Table (1.." + t.RowCount + ")");
+			int rowIndex = 1;
+			foreach (var r in t.records) {
+				w.WriteLine (String.Format ("{0}: {1} {2:x} [{3}]", rowIndex, r.FuncCode, r.Token, StringifyToken (r.Token)));
+				rowIndex ++;
+			}
+		}
+
+		void DumpEncMapTable (TextWriter w) {
+			var t = module.EncMap;
+			w.WriteLine ("EncMap Table (1.." + t.RowCount + ")");
+			int rowIndex = 1;
+			foreach (var r in t.records) {
+				w.WriteLine (String.Format ("{0}: {1:x} [{2}]", rowIndex, r.Token, StringifyToken (r.Token)));
 				rowIndex ++;
 			}
 		}
