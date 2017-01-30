@@ -73,7 +73,7 @@ namespace Ildasm
 		Assembly assembly;
 		Module module;
 
-		public TableDumper (string inputFile) {
+		public TableDumper (string inputFile, string deltaFile, string deltaILFile) {
             universe = new Universe (UniverseOptions.None);
 
             var raw = universe.OpenRawModule (System.IO.File.OpenRead (inputFile), System.IO.Path.GetTempPath () + "/Dummy");
@@ -87,7 +87,13 @@ namespace Ildasm
                 var ab = universe.DefineDynamicAssembly (new AssemblyName ("<ModuleContainer>"), IKVM.Reflection.Emit.AssemblyBuilderAccess.ReflectionOnly);
                 assembly = ab;
                 module = ab.__AddModule (raw);
-            }			
+            }
+
+			if (deltaFile != null) {
+				var fs = File.OpenRead (deltaFile);
+				var ilfs = File.OpenRead (deltaILFile);
+				assembly.AddDelta (fs, ilfs);
+			}
 		}
 
 		public void DumpTable (TextWriter w, MetadataTableIndex tableIndex) {
@@ -107,6 +113,9 @@ namespace Ildasm
 			case MetadataTableIndex.EncMap:
 				DumpEncMapTable (w);
 				break;
+			case MetadataTableIndex.Module:
+				DumpModuleTable (w);
+				break;
 			default:
 				throw new NotImplementedException ();
 			}
@@ -123,7 +132,8 @@ namespace Ildasm
 		void DumpAssemblyTable (TextWriter w) {
 			var t = module.AssemblyTable;
 			w.WriteLine ("Assembly Table");
-			foreach (var r in t.records) {
+			for (int rowIndex = 1; rowIndex <= t.RowCount; rowIndex ++) {
+				var r = t.records [rowIndex - 1];
 				w.WriteLine (String.Format ("Name:          {0}", module.GetString (r.Name)));
 				w.WriteLine (String.Format ("Hash Algoritm: 0x{0:x08}", r.HashAlgId));
 				w.WriteLine (String.Format ("Version:       {0}.{1}.{2}.{3}", r.MajorVersion, r.MinorVersion, r.BuildNumber, r.RevisionNumber));
@@ -147,8 +157,8 @@ namespace Ildasm
 		void DumpAssemblyRefTable (TextWriter w) {
 			var t = module.AssemblyRef;
 			w.WriteLine ("AssemblyRef Table");
-			int rowIndex = 1;
-			foreach (var r in t.records) {
+			for (int rowIndex = 1; rowIndex <= t.RowCount; rowIndex ++) {
+				var r = t.records [rowIndex - 1];
 				w.WriteLine (String.Format ("{0}: Version={1}.{2}.{3}.{4}", rowIndex, r.MajorVersion, r.MinorVersion, r.BuildNumber, r.RevisionNumber));
 				w.WriteLine (String.Format ("\tName={0}", module.GetString (r.Name)));
 				w.WriteLine (String.Format ("\tFlags=0x{0:x08}", r.Flags));
@@ -162,17 +172,15 @@ namespace Ildasm
 					w.WriteLine ();
 				}
 				w.WriteLine ();
-				rowIndex ++;
 			}
 		}
 
 		void DumpModuleRefTable (TextWriter w) {
 			var t = module.ModuleRef;
 			w.WriteLine ("ModuleRef Table (1.." + t.RowCount + ")");
-			int rowIndex = 1;
-			foreach (var r in t.records) {
+			for (int rowIndex = 1; rowIndex <= t.RowCount; rowIndex ++) {
+				var r = t.records [rowIndex - 1];
 				w.WriteLine (String.Format ("{0}: {1}", rowIndex, module.GetString (r)));
-				rowIndex ++;
 			}
 		}
 
@@ -184,20 +192,29 @@ namespace Ildasm
 		void DumpEncLogTable (TextWriter w) {
 			var t = module.EncLog;
 			w.WriteLine ("EncLog Table (1.." + t.RowCount + ")");
-			int rowIndex = 1;
-			foreach (var r in t.records) {
+			for (int rowIndex = 1; rowIndex <= t.RowCount; rowIndex ++) {
+				var r = t.records [rowIndex - 1];
 				w.WriteLine (String.Format ("{0}: {1} {2:x} [{3}]", rowIndex, r.FuncCode, r.Token, StringifyToken (r.Token)));
-				rowIndex ++;
 			}
 		}
 
 		void DumpEncMapTable (TextWriter w) {
 			var t = module.EncMap;
 			w.WriteLine ("EncMap Table (1.." + t.RowCount + ")");
-			int rowIndex = 1;
-			foreach (var r in t.records) {
+			for (int rowIndex = 1; rowIndex <= t.RowCount; rowIndex ++) {
+				var r = t.records [rowIndex - 1];
 				w.WriteLine (String.Format ("{0}: {1:x} [{2}]", rowIndex, r.Token, StringifyToken (r.Token)));
-				rowIndex ++;
+			}
+		}
+
+		void DumpModuleTable (TextWriter w) {
+			var t = module.ModuleTable;
+			w.WriteLine ("Module Table (1.." + t.RowCount + ")");
+			for (int rowIndex = 1; rowIndex <= t.RowCount; rowIndex ++) {
+				var r = t.records [rowIndex - 1];
+				string encid = r.EncId > 0 ? module.GetGuid (r.EncId).ToString () : "none";
+				string encbaseid = r.EncBaseId > 0 ? module.GetGuid (r.EncBaseId).ToString () : "none";
+				w.WriteLine (String.Format ("{0}: {1}({2}) mvid={3} encid={4} encbaseid={5}", rowIndex, module.GetString (r.Name), r.Generation, module.GetGuid (r.Mvid), encid, encbaseid));
 			}
 		}
 	}

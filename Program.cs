@@ -53,6 +53,7 @@ namespace Ildasm
 						{ "moduleref", v =>tableToDump = MetadataTableIndex.ModuleRef },
 						{ "enclog", v =>tableToDump = MetadataTableIndex.EncLog },
 						{ "encmap", v =>tableToDump = MetadataTableIndex.EncMap },
+						{ "module", v =>tableToDump = MetadataTableIndex.Module },
 						{ "delta=", v => deltaFile = v },
 						{ "deltail=", v => deltaILFile = v },
 					};
@@ -133,7 +134,7 @@ namespace Ildasm
             }
 			if (tableToDump.HasValue)
 			{
-				var tableDumper = new TableDumper(inputFile);
+				var tableDumper = new TableDumper(inputFile, deltaFile, deltaILFile);
 				if (outputFile != null)
 				{
 					using (StreamWriter sw = new StreamWriter(outputFile, false))
