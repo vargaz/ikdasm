@@ -27,6 +27,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 using IKVM.Reflection;
+using IKVM.Reflection.Metadata;
 
 namespace Ildasm
 {
@@ -34,6 +35,7 @@ namespace Ildasm
 		ModuleRef = 0x1a,
 		Assembly = 0x20,
 		AssemblyRef = 0x23,
+		ExportedType = 0x27,
 	}
 
 	class TableDumper
@@ -69,6 +71,9 @@ namespace Ildasm
 				break;
 			case MetadataTableIndex.ModuleRef:
 				DumpModuleRefTable (w);
+				break;
+			case MetadataTableIndex.ExportedType:
+				DumpExportedTypeTable (w);
 				break;
 			default:
 				throw new NotImplementedException ();
@@ -135,6 +140,35 @@ namespace Ildasm
 			int rowIndex = 1;
 			foreach (var r in t.records) {
 				w.WriteLine (String.Format ("{0}: {1}", rowIndex, module.GetString (r)));
+				rowIndex ++;
+			}
+		}
+
+		string GetManifestImpl (int idx) {
+			if (idx == 0)
+				return "current module";
+			uint table = (uint)idx >> 24;
+			uint row = (uint)idx & 0xffffff;
+			switch (table) {
+			case FileTable.Index:
+				return "file " + row;
+			case (uint)AssemblyRefTable.Index:
+				return "assemblyref " + row;
+			case (uint)ExportedTypeTable.Index:
+				return "exportedtype " + row;
+			default:
+				return "";
+			}
+		}
+
+		void DumpExportedTypeTable (TextWriter w) {
+			var t = module.ExportedType;
+			w.WriteLine ("ExportedType Table (1.." + t.RowCount + ")");
+			int rowIndex = 1;
+			foreach (var r in t.records) {
+				string name = module.GetString (r.TypeName);
+				string nspace = module.GetString (r.TypeNamespace);
+				w.WriteLine (String.Format ("{0}: {1}{2}{3} is in {4}, index={5:x}, flags=0x{6:x}", rowIndex, nspace, nspace != "" ? "." : "", name, GetManifestImpl (r.Implementation), r.TypeDefId, r.Flags));
 				rowIndex ++;
 			}
 		}
