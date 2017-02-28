@@ -49,7 +49,8 @@ namespace Ildasm
 						{ "assembly", v =>tableToDump = MetadataTableIndex.Assembly },
 						{ "assemblyref", v =>tableToDump = MetadataTableIndex.AssemblyRef },
 						{ "moduleref", v =>tableToDump = MetadataTableIndex.ModuleRef },
-						{ "exported", v =>tableToDump = MetadataTableIndex.ExportedType }
+						{ "exported", v =>tableToDump = MetadataTableIndex.ExportedType },
+						{ "customattr", v =>tableToDump = MetadataTableIndex.CustomAttribute },
 					};
 				args = p.Parse (args).ToArray ();
 				if (printUsage) {
@@ -202,6 +203,7 @@ namespace Ildasm
                 Console.WriteLine ("  -assemblyref       Dumps the contents of the AssemblyRef table");
                 Console.WriteLine ("  -moduleref         Dumps the contents of the ModuleRef table");
                 Console.WriteLine ("  -exportedtype      Dumps the contents of the ExportedType table");
+                Console.WriteLine ("  -customattr        Dumps the contents of the CustomAttribute table");
             } else {
                 Console.WriteLine("  /OUT=<file name>    Direct output to file rather than to stdout.");
 				Console.WriteLine("  /COMPAT=<version>   Match ildasm behavior. (<version> = 2.0 | 4.0 | 4.5)");

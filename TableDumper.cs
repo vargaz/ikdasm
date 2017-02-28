@@ -32,6 +32,7 @@ using IKVM.Reflection.Metadata;
 namespace Ildasm
 {
 	enum MetadataTableIndex {
+		CustomAttribute = 0xc,
 		ModuleRef = 0x1a,
 		Assembly = 0x20,
 		AssemblyRef = 0x23,
@@ -74,6 +75,9 @@ namespace Ildasm
 				break;
 			case MetadataTableIndex.ExportedType:
 				DumpExportedTypeTable (w);
+				break;
+			case MetadataTableIndex.CustomAttribute:
+				DumpCustomAttributeTable (w);
 				break;
 			default:
 				throw new NotImplementedException ();
@@ -169,6 +173,89 @@ namespace Ildasm
 				string name = module.GetString (r.TypeName);
 				string nspace = module.GetString (r.TypeNamespace);
 				w.WriteLine (String.Format ("{0}: {1}{2}{3} is in {4}, index={5:x}, flags=0x{6:x}", rowIndex, nspace, nspace != "" ? "." : "", name, GetManifestImpl (r.Implementation), r.TypeDefId, r.Flags));
+				rowIndex ++;
+			}
+		}
+
+		void DumpCustomAttributeTable (TextWriter w) {
+			var t = module.CustomAttribute;
+			w.WriteLine ("CustomAttribute Table (1.." + t.RowCount + ")");
+			int rowIndex = 1;
+			foreach (var r in t.records) {
+			}
+
+			Dictionary<int, string> table_names = new Dictionary<int, string> () {
+					{ MethodDefTable.Index, "MethodDef" },
+					{ FieldTable.Index,  "FieldDef" },
+					{ TypeRefTable.Index, "TypeRef" },
+					{ TypeDefTable.Index, "TypeDef" },
+					{ ParamTable.Index, "Param" },
+					{ InterfaceImplTable.Index, "InterfaceImpl" },
+					{ MemberRefTable.Index, "MemberRef" },
+					{ AssemblyTable.Index,  "Assembly" },
+					{ ModuleTable.Index, "Module" },
+					{ PropertyTable.Index, "Property" },
+					{ EventTable.Index, "Event" },
+					{ StandAloneSigTable.Index, "StandAloneSignature" },
+					{ ModuleRefTable.Index, "ModuleRef" },
+					{ TypeSpecTable.Index, "TypeSpec" },
+					{ AssemblyRefTable.Index, "AssemblyRef" },
+					{ FileTable.Index, "File" },
+					{ ExportedTypeTable.Index, "ExportedType" },
+					{ ManifestResourceTable.Index, "Manifest" },
+					{ GenericParamTable.Index, "GenericParam" }
+				};
+
+			string StringifyCattrValue (object val) {
+				if (val.GetType () == typeof (string))
+					return String.Format ("\"{0}\"", val);
+				else if (val == null)
+					return "null";
+				else
+					return val.ToString ();
+			}
+
+			foreach (var cattr in module.__EnumerateCustomAttributeTable ()) {
+				//Console.WriteLine (cattr);
+
+				int parent_token = cattr.__Parent;
+
+				string parent;
+				int table_idx = parent_token >> 24;
+				int row = parent_token & 0xffffff;
+				if (!table_names.TryGetValue (table_idx, out parent))
+					parent = "Unknown";
+
+				var args = new StringBuilder ();
+				args.Append ("[");
+				bool first_arg = true;
+				var sep = "";
+				foreach (var arg in cattr.ConstructorArguments) {
+					args.Append (sep).Append (StringifyCattrValue (arg.Value));
+					sep = ", ";
+				}
+				foreach (var named_arg in cattr.NamedArguments) {
+					args.Append (sep);
+					args.Append ("{");
+					args.Append (String.Format ("{0} = {1}", named_arg.MemberName, StringifyCattrValue (named_arg.TypedValue.Value)));
+					args.Append ("}");
+					sep = ", ";
+				}
+				args.Append ("]");
+
+				var ctor = cattr.Constructor;
+				var method = new StringBuilder ();
+				method.Append ("instance void class ");
+				method.Append (String.Format ("[{0}]{1}", ctor.DeclaringType.Assembly.GetName ().Name, ctor.DeclaringType.ToString ()));
+				method.Append ("::'.ctor'(");
+				sep = "";
+				foreach (var arg in ctor.GetParameters ()) {
+					method.Append (sep).Append (arg.ParameterType);
+					sep = ", ";
+				}
+				method.Append (")");
+
+				w.WriteLine (String.Format ("{0}: {1}: {2} {3} {4}", rowIndex, parent, row, method, args));
 				rowIndex ++;
 			}
 		}
