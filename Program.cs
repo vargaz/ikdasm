@@ -202,7 +202,7 @@ namespace Ildasm
                 Console.WriteLine ("  -assembly          Dumps the contents of the Assembly table");
                 Console.WriteLine ("  -assemblyref       Dumps the contents of the AssemblyRef table");
                 Console.WriteLine ("  -moduleref         Dumps the contents of the ModuleRef table");
-                Console.WriteLine ("  -exportedtype      Dumps the contents of the ExportedType table");
+                Console.WriteLine ("  -exported          Dumps the contents of the ExportedType table");
                 Console.WriteLine ("  -customattr        Dumps the contents of the CustomAttribute table");
             } else {
                 Console.WriteLine("  /OUT=<file name>    Direct output to file rather than to stdout.");
