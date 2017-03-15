@@ -177,6 +177,15 @@ namespace Ildasm
 			}
 		}
 
+		string StringifyCattrValue (object val) {
+			if (val.GetType () == typeof (string))
+				return String.Format ("\"{0}\"", val);
+			else if (val == null)
+				return "null";
+			else
+				return val.ToString ();
+		}
+
 		void DumpCustomAttributeTable (TextWriter w) {
 			var t = module.CustomAttribute;
 			w.WriteLine ("CustomAttribute Table (1.." + t.RowCount + ")");
@@ -206,15 +215,6 @@ namespace Ildasm
 					{ GenericParamTable.Index, "GenericParam" }
 				};
 
-			string StringifyCattrValue (object val) {
-				if (val.GetType () == typeof (string))
-					return String.Format ("\"{0}\"", val);
-				else if (val == null)
-					return "null";
-				else
-					return val.ToString ();
-			}
-
 			foreach (var cattr in module.__EnumerateCustomAttributeTable ()) {
 				//Console.WriteLine (cattr);
 
@@ -228,7 +228,6 @@ namespace Ildasm
 
 				var args = new StringBuilder ();
 				args.Append ("[");
-				bool first_arg = true;
 				var sep = "";
 				foreach (var arg in cattr.ConstructorArguments) {
 					args.Append (sep).Append (StringifyCattrValue (arg.Value));
